@@ -4,6 +4,8 @@ import sys
 import random
 import time
 from math import inf
+import copy
+
 # Returns a list of positions available on a board
 def get_available_moves(board):
     l = []
@@ -120,8 +122,25 @@ def neighbors(board, column, line):
 
     return l
 
+def heuristic(board, player):
+    #Heuristica dá peso negativo se não é mais possível ganhar na coluna
+    
+    for col in range(0, len(board)):
+        #for l in range(0, len(board[col])):
+        if player == "1":
+            if board[col].count(1) + board[col].count(0) >= 5:
+                return 10 #positivo, segue por aqui
+            else:
+                return -10 #negativo
+        if player == "2":
+            if board[col].count(1) + board[col].count(0) >= 5:
+                return -10 #positivo, segue por aqui
+            else:
+                return 10 #negativo
+            
 
-def minimax(board, depth, player): 
+
+def minimax(board, depth, player, depth_initial): 
     """ 
     Minimax algorithm that choose the best movement in board
     Args:
@@ -132,23 +151,32 @@ def minimax(board, depth, player):
         tuple: score and best move
     """
 
+    h = heuristic(board, player)
+
     final_state = is_final_state(board)
     if final_state is not None:
         if final_state == 1:
             return -10 - depth, board
         else:
             return 10 + depth, board
-    if depth == 0:
-        return 0, board 
+    if depth == depth_initial-2:
+        return h, board 
+    #print(player)
+    #print("BOARD")
+    #print(board)
+    #print("MOVE")
 
-    
     if player == "2":
         best_val = -inf
         best_mov = None
         for move in get_available_moves(board):
+            #print(move)
+            #print(get_available_moves(board))
+            board_cpy = copy.deepcopy(board)
             column, line = move
-            board[column-1][line-1] = 2
-            value, mov = minimax(board, depth-1, "1")
+            board_cpy[column-1][line-1] = 2
+            #print(board_cpy)
+            value, mov = minimax(board_cpy, depth-1, "1", depth_initial)
             if best_val < value:
                 best_val = value
                 best_mov = move
@@ -158,13 +186,18 @@ def minimax(board, depth, player):
         best_val = inf
         best_mov = None
         for move in get_available_moves(board):
+            #print(move)
+            #print(get_available_moves(board))
+            board_cpy = copy.deepcopy(board)
             column, line = move
-            board[column-1][line-1] = 1
-            value, mov = minimax(board, depth-1, "2")
+            board_cpy[column-1][line-1] = 1
+            #print(board_cpy)
+            value, mov = minimax(board_cpy, depth-1, "2", depth_initial)
             if best_val > value:
                 best_val = value
                 best_mov = move
         return best_val, best_mov
+
 
 
 if len(sys.argv)==1:
@@ -205,9 +238,10 @@ while not done:
 
         # Escolhe um movimento aleatoriamente
         #movimento = random.choice(movimentos)
-        movimento = minimax(board, len(movimentos), player)
-        print(movimento[1][0])
-        print(movimento[1][1])
+        movimento = minimax(board, len(movimentos), str(player), len(movimentos))
+        print(movimento)
+        #print(movimento[1][0])
+        #print(movimento[1][1])
         # Executa o movimento
         resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
         msg = eval(resp.read())
