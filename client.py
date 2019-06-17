@@ -123,22 +123,87 @@ def neighbors(board, column, line):
     return l
 
 def heuristic(board, player):
-    #Heuristica dá peso negativo se não é mais possível ganhar na coluna
     
-    for col in range(0, len(board)):
-        #for l in range(0, len(board[col])):
+    num_pecas = 3
+    # test vertical
+    for col in range(0,len(board)):
         if player == "1":
-            if board[col].count(1) + board[col].count(0) >= 5:
-                return 10 #positivo, segue por aqui
-            else:
-                return -10 #negativo
+            if board[col].count(2) == num_pecas: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
+                return 10
         if player == "2":
-            if board[col].count(1) + board[col].count(0) >= 5:
-                return -10 #positivo, segue por aqui
-            else:
-                return 10 #negativo
-            
+            if board[col].count(1) == num_pecas: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
+                return -10
 
+    # test upward diagonals
+    diags = [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
+                (2, 6), (3, 7), (4, 8), (5, 9), (6, 10)]
+    for column_0, line_0 in diags:
+        state = []
+        coords = (column_0, line_0)
+        while coords != None:
+            column = coords[0]
+            line = coords[1]
+            state.append(board[column - 1][line - 1])
+            
+            if player == "1":
+                if state.count(1) == num_pecas:
+                    return -10 #perto da vitoria
+                if state.count(2) == num_pecas:
+                    return 10 #perto da derrota
+            if player == "2":
+                if state.count(1) == num_pecas:
+                    return 10 #perto da vitoria
+                if state.count(2) == num_pecas:
+                    return -10 #perto da derrota
+            coords = neighbors(board, column, line)[1]
+    
+    # test downward diagonals
+    diags = [(6, 1), (5, 1), (4, 1), (3, 1), (2, 1),
+                (1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]
+    for column_0, line_0 in diags:
+        state = []
+        coords = (column_0, line_0)
+        while coords != None:
+            column = coords[0]
+            line = coords[1]
+            state.append(board[column - 1][line - 1])
+            
+            if player == "1":
+                if state.count(1) == num_pecas:
+                    return -10 #perto da vitoria
+                if state.count(2) == num_pecas:
+                    return 10 #perto da derrota
+            if player == "2":
+                if state.count(1) == num_pecas:
+                    return 10 #perto da vitoria
+                if state.count(2) == num_pecas:
+                    return -10 #perto da derrota
+
+            coords = neighbors(board, column, line)[4]
+    
+    #Heuristica dá peso negativo se não é mais possível ganhar na coluna
+    """
+    for col in range(0, len(board)):
+        if player == "1":
+            if board[col].count(1) + board[col].count(0) < 5:
+                return 10 #negativo
+        if player == "2":
+            if board[col].count(2) + board[col].count(0) < 5:
+                return -10 #negativo
+    """
+    """
+    for col in range(0, len(board)):
+        for line in range(0, len(board[col])):
+            if player == "1":
+                if board[col].count(1) + board[col].count(0) < 5:
+                    return 10 #negativo
+            if player == "2":
+                if board[col].count(2) + board[col].count(0) < 5:
+                    return -10 #negativo
+    """
+ 
+    return 0
+            
 
 def minimax(board, depth, player, depth_initial): 
     """ 
@@ -151,7 +216,6 @@ def minimax(board, depth, player, depth_initial):
         tuple: score and best move
     """
 
-    h = heuristic(board, player)
 
     final_state = is_final_state(board)
     if final_state is not None:
@@ -159,12 +223,10 @@ def minimax(board, depth, player, depth_initial):
             return -10 - depth, board
         else:
             return 10 + depth, board
+    
+    h = heuristic(board, player)
     if depth == depth_initial-2:
         return h, board 
-    #print(player)
-    #print("BOARD")
-    #print(board)
-    #print("MOVE")
 
     if player == "2":
         best_val = -inf
