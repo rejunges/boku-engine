@@ -128,10 +128,11 @@ def heuristic(board, player):
     # test vertical
     for col in range(0,len(board)):
         if player == "1":
-            if board[col].count(2) > board[col].count(1): # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
-                return 10
+            if board[col].count(2) == num_pecas: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
+                return 10 # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
+                
         if player == "2":
-            if board[col].count(1) > board[col].count(2): # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
+            if board[col].count(1) == num_pecas: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
                 return -10
 
     # test upward diagonals
@@ -212,8 +213,82 @@ def alpha_beta(board, depth, player, depth_initial, alpha=-inf, beta = inf):
         else:
             return 10, board
     
-    h = heuristic(board, player)
     if depth == depth_initial-2:
+        h = heuristic(board, player)
+        return h, board 
+
+    if player == "2":
+        best_val = -inf
+        best_mov = None
+        for move in get_available_moves(board):
+            print(move)
+            print(board)
+            board_cpy = copy.deepcopy(board)
+            column, line = move
+            board_cpy[column-1][line-1] = 2
+            v, board = alpha_beta(board_cpy, depth-1, "1", depth_initial, alpha, beta)
+            #value, mov = minimax(board_cpy, depth-1, "1", depth_initial)
+            if best_val < v:
+                best_val = v
+                best_mov = move
+            
+            """
+            best_val = max(best_val, v)
+            alpha = max(alpha, best_val)
+
+            if best_val < alpha:
+                best_mov = move
+            if beta <= alpha:
+                break
+            """
+        return best_val, best_mov
+    
+    else:
+        best_val = inf
+        best_mov = None
+        for move in get_available_moves(board):
+            print(move)
+            print(board)
+            board_cpy = copy.deepcopy(board)
+            column, line = move
+            board_cpy[column-1][line-1] = 1
+            v, board = alpha_beta(board_cpy, depth-1, "2", depth_initial, alpha, beta)
+            if best_val > v:
+                best_val = v
+                best_mov = move
+            
+            """
+            best_val = min(best_val, v)
+            alpha = min(alpha, best_val)
+
+            if best_val > alpha:
+                best_mov = move
+            if beta <= alpha:
+                break
+            """
+        return best_val, best_mov
+
+def alphabeta(board, depth, player, depth_initial, alpha= -inf, beta = inf): 
+    """ 
+    Minimax algorithm that choose the best movement in board
+    Args:
+        board (list): the state of the board
+        depth (int): how many free position the board has
+        player (str): player ("X" or "O") 
+    Returns:
+        tuple: score and best move
+    """
+
+    #print(board)
+    final_state = is_final_state(board)
+    if final_state is not None:
+        if final_state == 1:
+            return -10, board
+        else:
+            return 10, board 
+    
+    if depth == depth_initial-2:
+        h = heuristic(board, player)
         return h, board 
 
     if player == "2":
@@ -221,18 +296,17 @@ def alpha_beta(board, depth, player, depth_initial, alpha=-inf, beta = inf):
         best_mov = None
         for move in get_available_moves(board):
             #print(move)
-            #print(get_available_moves(board)
-            print(type(board))
+            #print(get_available_moves(board))
             board_cpy = copy.deepcopy(board)
-            print(type(board_cpy))
             column, line = move
             board_cpy[column-1][line-1] = 2
-            v, board = alpha_beta(board_cpy, depth-1, "1", depth_initial, alpha, beta)
-            best_val = max(best_val, v)
-            alpha = max(alpha, best_val)
-            if best_val < alpha:
+            value, b = alphabeta(board_cpy, depth-1, "1", depth_initial, alpha, beta)
+            if best_val < value:                
                 best_mov = move
-            if beta <= alpha:
+            
+            best_val = max(value, best_val)
+            alpha = max(alpha, best_val)
+            if alpha >= beta:
                 break
         return best_val, best_mov
     
@@ -242,22 +316,19 @@ def alpha_beta(board, depth, player, depth_initial, alpha=-inf, beta = inf):
         for move in get_available_moves(board):
             #print(move)
             #print(get_available_moves(board))
-            print(board)
-            print(move)
             board_cpy = copy.deepcopy(board)
-            
             column, line = move
             board_cpy[column-1][line-1] = 1
-            #print(board_cpy)
-            v, board = alpha_beta(board_cpy, depth-1, "1", depth_initial, alpha, beta)
-            best_val = min(best_val, v)
-            alpha = min(alpha, best_val)
-            if best_val > alpha:
+            value, b = alphabeta(board_cpy, depth-1, "2", depth_initial, alpha, beta)
+            if best_val > value:                
                 best_mov = move
-            if beta <= alpha:
+            
+            best_val = min(value, best_val)
+            beta = min(alpha, best_val)
+            if alpha >= beta:
                 break
         return best_val, best_mov
-            
+
 
 def minimax(board, depth, player, depth_initial): 
     """ 
@@ -272,12 +343,15 @@ def minimax(board, depth, player, depth_initial):
 
     #print(board)
     final_state = is_final_state(board)
-    if final_state is not None or depth == depth_initial -3:
+    if final_state is not None:
+        if final_state == 1:
+            return -10, board
+        else:
+            return 10, board 
+    
+    if depth == depth_initial-2:
         h = heuristic(board, player)
-        #print("Player: ", player)
-        #print(h)
         return h, board 
-    #print("\n")
 
     if player == "2":
         best_val = -inf
@@ -288,7 +362,7 @@ def minimax(board, depth, player, depth_initial):
             board_cpy = copy.deepcopy(board)
             column, line = move
             board_cpy[column-1][line-1] = 2
-            #print(board_cpy)
+            print(board_cpy)
             value, mov = minimax(board_cpy, depth-1, "1", depth_initial)
             if best_val < value:
                 best_val = value
@@ -304,7 +378,7 @@ def minimax(board, depth, player, depth_initial):
             board_cpy = copy.deepcopy(board)
             column, line = move
             board_cpy[column-1][line-1] = 1
-            #print(board_cpy)
+            print(board_cpy)
             value, mov = minimax(board_cpy, depth-1, "2", depth_initial)
             if best_val > value:
                 best_val = value
@@ -351,7 +425,9 @@ while not done:
 
         # Escolhe um movimento aleatoriamente
         #movimento = random.choice(movimentos)
-        movimento = alpha_beta(board, len(movimentos), str(player), len(movimentos))
+        #movimento = minimax(board, len(movimentos), str(player), len(movimentos))
+        #movimento = alpha_beta(board, len(movimentos), str(player), len(movimentos))
+        movimento = alphabeta(board, len(movimentos), str(player), len(movimentos))
         print(movimento)
         #print(movimento[1][0])
         #print(movimento[1][1])
