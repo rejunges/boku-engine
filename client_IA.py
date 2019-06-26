@@ -130,35 +130,61 @@ def heuristic(board, player):
         else:
             return -1, (-1, -1)
     
-    return 0, (-1,-1)
+    score = 0
+    
+    num_pecas = 3
+    for col in range(0, len(board)):
+        if player == 2: #MIN
+            if board[col].count(1) >= num_pecas and board[col].count(0) != 0:
+                return -1, (-1, -1)
+        if player == 1: #MAX
+            if board[col].count(2) >= num_pecas and board[col].count(0) != 0:
+                return 1, (-1, -1)
+    
+    """
+    num_pecas = 3
+    # test vertical
+    for col in range(0,len(board)):
+        print(board)
+        print(col)
+        if player == "2": #MIN
+            if board[col].count(1) >= num_pecas and board[col].count(0) != 0: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
+                print("-10")
+                return -10 # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
+                
+        if player == "1": #MAX
+            if board[col].count(2) >= num_pecas and board[col].count(0) != 0: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
+                print("10")
+                return 10
+    print("0")
+    return 0
+    """
     """
     for col in range(0,len(board)):
         #print("\n")
         #print(board)
         #print("COLUNA AVALIADA: ", col)
-       
-        if player == "2": #MIN
-            if board[col].count(1) > board[col].count(2) and board[col].count(0) != 0: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
-                #print("VALOR HEURISTICA: -10")
-                return 10 # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
+        #print("COUNT 1:", board[col].count(1))
+        if player == 2: #MIN
+            if board[col].count(1) > board[col].count(2) and board[col].count(0) != 0:
+                score += -1 # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
                 
-        if player == "1": #MAX
-            if board[col].count(2) > board[col].count(1) and board[col].count(0) != 0: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
-                #print("VALOR HEURISTICA: 10")
-                return -10
+                
+        if player == 1: #MAX
+            if board[col].count(2) > board[col].count(1) and board[col].count(0) != 0: 
+                score += 1
+    """           
         
-    #print("VALOR HEURISTICA: 0")
-    return 0
-    """
+    
+    return score, (-1, -1)
+    
     
  
 def minimax(board, depth, player, depth_initial):
 
-    h = heuristic(board, player)
-    #print(board)
-    #print("Depth:", depth)
-    #print("Valor heuristica", h)
-    if depth == depth_initial-2 or depth == 0:
+
+    if depth == depth_initial-2:
+        h = heuristic(board, player)
         return h
     
     if player == 2: #MIN 
@@ -173,6 +199,7 @@ def minimax(board, depth, player, depth_initial):
             if best_val > value:
                 best_val = value
                 best_mov = move
+                
         return best_val, best_mov
     
     else: #MAX 
@@ -187,6 +214,7 @@ def minimax(board, depth, player, depth_initial):
             if best_val < value:
                 best_val = value
                 best_mov = move
+                
         return best_val, best_mov
 
 
