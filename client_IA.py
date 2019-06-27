@@ -178,7 +178,50 @@ def heuristic(board, player):
     
     return score, (-1, -1)
     
+
+def alphabeta(board, depth, player, depth_initial, alpha=-inf, beta=inf):
+
+
+    if depth == depth_initial-2:
+        h = heuristic(board, player)
+        return h
     
+    if player == 2: #MIN 
+        best_val = inf
+        best_mov = None
+        for move in get_available_moves(board):
+            board_cpy = copy.deepcopy(board)
+            column, line = move
+            board_cpy[column-1][line-1] = player
+            value, _  = alphabeta(board_cpy, depth-1, 1, depth_initial, alpha, beta)
+            
+            if best_val > value:                
+                best_mov = move
+            
+            best_val = min(value, best_val)
+            beta = min(beta, best_val)
+            if alpha >= beta:
+                break
+                
+        return best_val, best_mov
+    
+    else: #MAX 
+        best_val = -inf
+        best_mov = None
+        for move in get_available_moves(board):
+            board_cpy = copy.deepcopy(board)
+            column, line = move
+            board_cpy[column-1][line-1] = player
+            value, _ = alphabeta(board_cpy, depth-1, 2, depth_initial, alpha, beta)
+    
+            if best_val < value:
+                best_mov = move
+            
+            best_val = max(value, best_val)
+            alpha = max(alpha, best_val)
+            if alpha >= beta:
+                break                
+        return best_val, best_mov
  
 def minimax(board, depth, player, depth_initial):
 
@@ -252,7 +295,8 @@ while not done:
         movimentos = eval(resp.read())
 
         if len(movimentos) > 6: #jogadas normais
-            movimento = minimax(board, len(movimentos), player, len(movimentos))
+            #movimento = minimax(board, len(movimentos), player, len(movimentos))
+            movimento = alphabeta(board, len(movimentos), player, len(movimentos))
             resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
         
         else: #sanduiche
