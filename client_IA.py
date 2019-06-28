@@ -7,12 +7,12 @@ from math import inf
 import copy
 
 # Returns a list of positions available on a board
-def get_available_moves(board):
+def get_available_moves(board, inv_move):
     l = []
-    
+    inv_c, inv_l = inv_move
     for column in range(len(board)):
         for line in range(len(board[column])):
-            if board[column][line] == 0:
+            if board[column][line] == 0 and inv_c != column+1 and inv_l != line+1 :
                 #if (column + 1, line + 1) != forbidden_moves:
                 l.append((column + 1, line + 1))
     return l
@@ -223,45 +223,10 @@ def heuristic(board, player):
             score += 20
 
     return score, (-1, -1)
-    """
-    num_pecas = 3
-    # test vertical
-    for col in range(0,len(board)):
-        print(board)
-        print(col)
-        if player == "2": #MIN
-            if board[col].count(1) >= num_pecas and board[col].count(0) != 0: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
-                print("-10")
-                return -10 # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
-                
-        if player == "1": #MAX
-            if board[col].count(2) >= num_pecas and board[col].count(0) != 0: # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
-                print("10")
-                return 10
-    print("0")
-    return 0
-    """
-    """
-    for col in range(0,len(board)):
-        #print("\n")
-        #print(board)
-        #print("COLUNA AVALIADA: ", col)
-        #print("COUNT 1:", board[col].count(1))
-        if player == 2: #MIN
-            if board[col].count(1) > board[col].count(2) and board[col].count(0) != 0:
-                score += -1 # se o outro jogador está quase ganhando ("dominando coluna") avaliar como perda
-                
-                
-        if player == 1: #MAX
-            if board[col].count(2) > board[col].count(1) and board[col].count(0) != 0: 
-                score += 1
-    """           
-        
-    
-    return score, (-1, -1)
+
     
 
-def alphabeta(board, depth, player, depth_initial, alpha=-inf, beta=inf):
+def alphabeta(board, depth, player, depth_initial, alpha=-inf, beta=inf, inv_move = (-1,-1)):
 
 
     if depth == depth_initial-2:
@@ -271,7 +236,7 @@ def alphabeta(board, depth, player, depth_initial, alpha=-inf, beta=inf):
     if player == 2: #MIN 
         best_val = inf
         best_mov = None
-        for move in get_available_moves(board):
+        for move in get_available_moves(board, inv_move):
             board_cpy = copy.deepcopy(board)
             column, line = move
             board_cpy[column-1][line-1] = player
@@ -290,7 +255,7 @@ def alphabeta(board, depth, player, depth_initial, alpha=-inf, beta=inf):
     else: #MAX 
         best_val = -inf
         best_mov = None
-        for move in get_available_moves(board):
+        for move in get_available_moves(board, inv_move):
             board_cpy = copy.deepcopy(board)
             column, line = move
             board_cpy[column-1][line-1] = player
@@ -305,7 +270,7 @@ def alphabeta(board, depth, player, depth_initial, alpha=-inf, beta=inf):
                 break                
         return best_val, best_mov
  
-def minimax(board, depth, player, depth_initial):
+def minimax(board, depth, player, depth_initial, inv_move = (-1,-1)):
 
 
     if depth == depth_initial-2:
@@ -315,7 +280,7 @@ def minimax(board, depth, player, depth_initial):
     if player == 2: #MIN 
         best_val = inf
         best_mov = None
-        for move in get_available_moves(board):
+        for move in get_available_moves(board, inv_move):
             board_cpy = copy.deepcopy(board)
             column, line = move
             board_cpy[column-1][line-1] = player
@@ -330,7 +295,7 @@ def minimax(board, depth, player, depth_initial):
     else: #MAX 
         best_val = -inf
         best_mov = None
-        for move in get_available_moves(board):
+        for move in get_available_moves(board, inv_move):
             board_cpy = copy.deepcopy(board)
             column, line = move
             board_cpy[column-1][line-1] = player
@@ -342,6 +307,15 @@ def minimax(board, depth, player, depth_initial):
                 
         return best_val, best_mov
 
+def invalid_move(board, ant_board, player):
+    
+    for col in range(0, len(board)):
+        if board[col] != ant_board[col]: #Pode ser diferente pq o oponente adicionou uma peça ou pq removeu uma peça 
+            if board[col].count(player) != ant_board[col].count(player): #Ocorreu sanduiche e a posição onde aconteceu isso é invalida
+                for line in range(0, len(board[col])):
+                    if board[col][line] != ant_board[col][line] and ant_board[col][line] == player:
+                        return col+1, line+1
+    return -1, -1
 
 if len(sys.argv)==1:
     print("Voce deve especificar o numero do jogador (1 ou 2)\n\nExemplo:    ./random_client.py 1")
@@ -354,8 +328,11 @@ player = int(sys.argv[1])
 
 # Reinicia o tabuleiro
 resp = urllib.request.urlopen("%s/reiniciar" % host)
-
+number_sand = 0 #Número de sanduiches, negativo quando o player COMP remove peça, positivo quando o oponente remove peça
+ant_board = None
+ant_ant_board = None
 done = False
+
 while not done:
     # Pergunta quem eh o jogador
     resp = urllib.request.urlopen("%s/jogador" % host)
@@ -366,26 +343,43 @@ while not done:
         print("I lose.")
         done = True
 
-    #Pega o tabuleiro completo
-    resp = urllib.request.urlopen("%s/tabuleiro" % host)
-    board = eval(resp.read()) #lista com 11 listas representando cada fileira na vertical (0 vazio, 1 player 1 e 2 player 2)
 
     # Se for a vez do jogador
     if player_turn==player:
+        #Pega o tabuleiro completo
+        resp = urllib.request.urlopen("%s/tabuleiro" % host)
+        board = eval(resp.read()) #lista com 11 listas representando cada fileira na vertical (0 vazio, 1 player 1 e 2 player 2)
+
         # Pega os movimentos possiveis
         resp = urllib.request.urlopen("%s/movimentos" % host)
         movimentos = eval(resp.read())
 
         if len(movimentos) > 6: #jogadas normais
-            #movimento = minimax(board, len(movimentos), player, len(movimentos))
-            movimento = alphabeta(board, len(movimentos), player, len(movimentos))
-            resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
-        
+            #player 1 e 2 com numero total de peças no tabuleiro
+            player_1 = sum([col.count(1) for col in board])
+            player_2 = sum([col.count(2) for col in board])
+
+            if player == 2: #Uma peça a menos normalmente
+                #print(player_1 - player_2)
+                #print(number_sand)
+                if player_1 - player_2 == 1 + number_sand: 
+                    #movimento = minimax(board, len(movimentos), player, len(movimentos))
+                    movimento = alphabeta(board, len(movimentos), player, len(movimentos))
+                    resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
+                else: #sanduiche
+                    number_sand += 1
+                    inv_move = invalid_move(board, ant_board, player) #por causa do sanduiche
+                    movimento = alphabeta(board, len(movimentos), player, len(movimentos), -inf, inf, inv_move)
+                    resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
+
+
         else: #sanduiche
+            number_sand -= 1
             movimento = random.choice(movimentos)
             resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[0],movimento[1]))
         
         print(movimento)
+        #Pega o tabuleiro completo
         
         msg = eval(resp.read())
         # Se com o movimento o jogo acabou, o cliente venceu
@@ -394,6 +388,10 @@ while not done:
             done = True
         if msg[0]<0:
             raise Exception(msg[1])
+        
+        resp = urllib.request.urlopen("%s/tabuleiro" % host)
+        board = eval(resp.read()) #lista com 11 listas representando cada fileira na vertical (0 vazio, 1 player 1 e 2 player 2)
+        ant_board = copy.deepcopy(board) #pega o board anterior para caso ocorra o sanduiche saber qual a posição inválida
         
     # Descansa um pouco para nao inundar o servidor com requisicoes
     time.sleep(1)
