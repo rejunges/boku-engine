@@ -201,6 +201,8 @@ def total_seq_upward(board, player, num_pecas):
 
     diags = [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
                 (2, 6), (3, 7), (4, 8), (5, 9), (6, 10)]
+    count = 0
+    oponente = 2 if player == 1 else 1
     for column_0, line_0 in diags:
         seq = ""
         coords = (column_0, line_0)
@@ -211,28 +213,28 @@ def total_seq_upward(board, player, num_pecas):
             seq += str(state)
             coords = neighbors(board, column, line)[1]
 
-    count = 0
-    oponente = 2 if player == 1 else 1
+        if seq[0:num_pecas+2] == "0" + str(player)*num_pecas + "0":
+            count += 50
+        elif seq[0:num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+            count -= 20 
 
-    if seq[0:num_pecas+2] == "0" + str(player)*num_pecas + "0":
-        count += 50
-    elif seq[0:num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
-        count -= 20 
+        for i in range(1, len(seq)):
+            if i+num_pecas+2 < len(seq)-1:
+                if seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + "0":
+                    count += 50
+                elif seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+                    count -= 20
+                elif seq[i:i+num_pecas+2] == str(oponente) + str(player)*num_pecas + str(oponente):
+                    count -= 40
 
-    for i in range(1, len(seq)):
-        if i+num_pecas+2 < len(seq)-1:
-            if seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + "0":
-                count += 50
-            elif seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
-                count -= 20
-            elif seq[i:i+num_pecas+2] == str(oponente) + str(player)*num_pecas + str(oponente):
-                count -= 40
-                
     return count
 
 def total_seq_downward(board, player, num_pecas):
     diags = [(6, 1), (5, 1), (4, 1), (3, 1), (2, 1),
                 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]
+    
+    oponente = 2 if player == 1 else 1
+    count = 0
     for column_0, line_0 in diags:
         seq = ""
         coords = (column_0, line_0)
@@ -241,26 +243,24 @@ def total_seq_downward(board, player, num_pecas):
             line = coords[1]
             state = board[column - 1][line - 1]
         
-            seq = str(state)
+            seq += str(state)
             coords = neighbors(board, column, line)[4]
 
-    count = 0
-    oponente = 2 if player == 1 else 1
 
-    if seq[0:num_pecas+2] == "0" + str(player)*num_pecas + "0":
-        count += 50
-    elif seq[0:num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
-        count -= 20 
+        if seq[0:num_pecas+2] == "0" + str(player)*num_pecas + "0":
+            count += 50
+        elif seq[0:num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+            count -= 20 
 
-    for i in range(1, len(seq)):
-        if i+num_pecas+2 < len(seq)-1:
-            if seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + "0":
-                count += 50
-            elif seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
-                count -= 20
-            elif seq[i:i+num_pecas+2] == str(oponente) + str(player)*num_pecas + str(oponente):
-                count -= 40
-                
+        for i in range(1, len(seq)):
+            if i+num_pecas+2 < len(seq)-1:
+                if seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + "0":
+                    count += 50
+                elif seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+                    count -= 20
+                elif seq[i:i+num_pecas+2] == str(oponente) + str(player)*num_pecas + str(oponente):
+                    count -= 40
+       
     return count
 
 def heuristic(board, player):
