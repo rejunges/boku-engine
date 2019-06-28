@@ -10,13 +10,6 @@ import copy
 def get_available_moves(board):
     l = []
     
-    #Descomentar proximas linhas para fazer o sanduiche
-
-    #removal_options = self.can_remove(self.player)
-    #if removal_options != None:
-    #    self.waiting_removal = True
-    #    return removal_options
-    #else:
     for column in range(len(board)):
         for line in range(len(board[column])):
             if board[column][line] == 0:
@@ -122,25 +115,114 @@ def neighbors(board, column, line):
 
     return l
 
+def is_possible_vertical(board, player):
+    """ É possivel fazer sequencia de 5 peças verticalmente? """
+    s = ""
+
+    for line in range(len(board)):
+        state = board[line]
+        if state == player or state == 0:
+            s += str(player)
+            if len(s) == 5:
+                return True
+        else: #quebra a sequencia
+            s = ""
+
+    return False
+
+
+def is_possible_downward_diagonal(board, player):
+    """ É possivel fazer sequencia de 5 peças na diagonal para baixo? """
+    
+    diags = [(6, 1), (5, 1), (4, 1), (3, 1), (2, 1),
+                (1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]
+    for column_0, line_0 in diags:
+        s = ""
+        coords = (column_0, line_0)
+        while coords != None:
+            column = coords[0]
+            line = coords[1]
+            state = board[column - 1][line - 1]
+            if state == player or state == 0:
+                s += str(state)
+                if len(s) == 5:
+                    return True
+            else:
+                s = ""
+            coords = neighbors(board, column, line)[4]
+    
+    return False
+
+def is_possible_upward_diagonal(board, player):
+    # test upward diagonals
+    diags = [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
+                (2, 6), (3, 7), (4, 8), (5, 9), (6, 10)]
+    for column_0, line_0 in diags:
+        s = ""
+        coords = (column_0, line_0)
+        while coords != None:
+            column = coords[0]
+            line = coords[1]
+            state = board[column - 1][line - 1]
+            if state == player or state == 0:
+                s += str(state)
+                if len(s) == 5:
+                    return True
+            else:
+                s = ""
+            coords = neighbors(board, column, line)[1]
+
+    return False
+
 def heuristic(board, player):
     final_state = is_final_state(board)
     if final_state is not None:
         if final_state == 1: 
-            return 1, (-1,-1)
+            return 1000, (-1,-1)
         else:
-            return -1, (-1, -1)
+            return -1000, (-1, -1)
     
     score = 0
     
     num_pecas = 3
     for col in range(0, len(board)):
-        if player == 2: #MIN
-            if board[col].count(1) >= num_pecas and board[col].count(0) != 0:
-                return -1, (-1, -1)
+        #if board[col].count(0) != 0:
         if player == 1: #MAX
-            if board[col].count(2) >= num_pecas and board[col].count(0) != 0:
-                return 1, (-1, -1)
-    
+            if is_possible_vertical(board[col], 2): 
+                score -= 25
+            if not is_possible_vertical(board[col], player): #FUGIR DESSE ESTADO
+                score -= 20
+            if is_possible_vertical(board[col], player): 
+                score += 30
+        if player == 2: #MIN
+            if is_possible_vertical(board[col], 1):
+                score += 25
+            if not is_possible_vertical(board[col], player): #FUGIR DESSE ESTADO
+                score += 20
+            if is_possible_vertical(board[col], player): 
+                score -= 30
+
+    if player == 1: 
+        if is_possible_downward_diagonal(board, player):
+            score += 20
+        if is_possible_upward_diagonal(board, player): 
+            score += 20
+        if not is_possible_downward_diagonal(board, player): #FUGIR DESSE ESTADO
+            score -= 20
+        if not is_possible_upward_diagonal(board, player): #FUGIR DESSE ESTADO
+            score -= 20
+
+    if player == 2:
+        if is_possible_downward_diagonal(board, player): 
+            score -= 20
+        if is_possible_upward_diagonal(board, player): 
+            score -= 20
+        if not is_possible_downward_diagonal(board, player): #FUGIR DESSE ESTADO
+            score += 20
+        if not is_possible_upward_diagonal(board, player): #FUGIR DESSE ESTADO
+            score += 20
+
+    return score, (-1, -1)
     """
     num_pecas = 3
     # test vertical
@@ -304,6 +386,7 @@ while not done:
             resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[0],movimento[1]))
         
         print(movimento)
+        
         msg = eval(resp.read())
         # Se com o movimento o jogo acabou, o cliente venceu
         if msg[0]==0:
@@ -311,7 +394,7 @@ while not done:
             done = True
         if msg[0]<0:
             raise Exception(msg[1])
-    
+        
     # Descansa um pouco para nao inundar o servidor com requisicoes
     time.sleep(1)
 
