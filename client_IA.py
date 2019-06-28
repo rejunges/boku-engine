@@ -371,6 +371,18 @@ while not done:
                     inv_move = invalid_move(board, ant_board, player) #por causa do sanduiche
                     movimento = alphabeta(board, len(movimentos), player, len(movimentos), -inf, inf, inv_move)
                     resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
+            
+            if player == 1: #Mesmo número de peças
+                
+                if player_1 - player_2 == 0 + number_sand: 
+                    #movimento = minimax(board, len(movimentos), player, len(movimentos))
+                    movimento = alphabeta(board, len(movimentos), player, len(movimentos))
+                    resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
+                else: #sanduiche
+                    number_sand += 1
+                    inv_move = invalid_move(board, ant_board, player) #por causa do sanduiche
+                    movimento = alphabeta(board, len(movimentos), player, len(movimentos), -inf, inf, inv_move)
+                    resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
 
 
         else: #sanduiche
