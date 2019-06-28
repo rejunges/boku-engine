@@ -115,15 +115,15 @@ def neighbors(board, column, line):
 
     return l
 
-def is_possible_vertical(board, player):
-    """ É possivel fazer sequencia de 5 peças verticalmente? """
+def is_possible_vertical(board, player, number_of_pieces = 5):
+    """ É possivel fazer sequencia de number_of_pieces peças verticalmente? """
     s = ""
 
     for line in range(len(board)):
         state = board[line]
         if state == player or state == 0:
             s += str(player)
-            if len(s) == 5:
+            if len(s) == number_of_pieces:
                 return True
         else: #quebra a sequencia
             s = ""
@@ -131,8 +131,8 @@ def is_possible_vertical(board, player):
     return False
 
 
-def is_possible_downward_diagonal(board, player):
-    """ É possivel fazer sequencia de 5 peças na diagonal para baixo? """
+def is_possible_downward_diagonal(board, player, number_of_pieces = 5):
+    """ É possivel fazer sequencia de number_of_pieces peças na diagonal para baixo? """
     
     diags = [(6, 1), (5, 1), (4, 1), (3, 1), (2, 1),
                 (1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]
@@ -145,7 +145,7 @@ def is_possible_downward_diagonal(board, player):
             state = board[column - 1][line - 1]
             if state == player or state == 0:
                 s += str(state)
-                if len(s) == 5:
+                if len(s) == number_of_pieces:
                     return True
             else:
                 s = ""
@@ -153,7 +153,7 @@ def is_possible_downward_diagonal(board, player):
     
     return False
 
-def is_possible_upward_diagonal(board, player):
+def is_possible_upward_diagonal(board, player, number_of_pieces = 5):
     # test upward diagonals
     diags = [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
                 (2, 6), (3, 7), (4, 8), (5, 9), (6, 10)]
@@ -166,13 +166,102 @@ def is_possible_upward_diagonal(board, player):
             state = board[column - 1][line - 1]
             if state == player or state == 0:
                 s += str(state)
-                if len(s) == 5:
+                if len(s) == number_of_pieces:
                     return True
             else:
                 s = ""
             coords = neighbors(board, column, line)[1]
 
     return False
+
+
+def total_seq_vertical(board, player, num_pecas):
+    s = ""
+    count = 0
+    oponente = 2 if player == 1 else 1
+    seq = ''.join(str(piece) for piece in board)
+
+    if seq[0:num_pecas+2] == "0" + str(player)*num_pecas + "0":
+        count += 50
+    elif seq[0:num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+        count -= 20 
+
+    for i in range(1, len(seq)):
+        if i+num_pecas+2 < len(seq)-1:
+            if seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + "0":
+                count += 50
+            elif seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+                count -= 20
+            elif seq[i:i+num_pecas+2] == str(oponente) + str(player)*num_pecas + str(oponente):
+                count -= 40
+                
+    return count
+
+def total_seq_upward(board, player, num_pecas):
+
+    diags = [(1, 1), (1, 2), (1, 3), (1, 4), (1, 5),
+                (2, 6), (3, 7), (4, 8), (5, 9), (6, 10)]
+    for column_0, line_0 in diags:
+        seq = ""
+        coords = (column_0, line_0)
+        while coords != None:
+            column = coords[0]
+            line = coords[1]
+            state = board[column - 1][line - 1]
+            seq += str(state)
+            coords = neighbors(board, column, line)[1]
+
+    count = 0
+    oponente = 2 if player == 1 else 1
+
+    if seq[0:num_pecas+2] == "0" + str(player)*num_pecas + "0":
+        count += 50
+    elif seq[0:num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+        count -= 20 
+
+    for i in range(1, len(seq)):
+        if i+num_pecas+2 < len(seq)-1:
+            if seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + "0":
+                count += 50
+            elif seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+                count -= 20
+            elif seq[i:i+num_pecas+2] == str(oponente) + str(player)*num_pecas + str(oponente):
+                count -= 40
+                
+    return count
+
+def total_seq_downward(board, player, num_pecas):
+    diags = [(6, 1), (5, 1), (4, 1), (3, 1), (2, 1),
+                (1, 1), (1, 2), (1, 3), (1, 4), (1, 5)]
+    for column_0, line_0 in diags:
+        seq = ""
+        coords = (column_0, line_0)
+        while coords != None:
+            column = coords[0]
+            line = coords[1]
+            state = board[column - 1][line - 1]
+        
+            seq = str(state)
+            coords = neighbors(board, column, line)[4]
+
+    count = 0
+    oponente = 2 if player == 1 else 1
+
+    if seq[0:num_pecas+2] == "0" + str(player)*num_pecas + "0":
+        count += 50
+    elif seq[0:num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+        count -= 20 
+
+    for i in range(1, len(seq)):
+        if i+num_pecas+2 < len(seq)-1:
+            if seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + "0":
+                count += 50
+            elif seq[i:i+num_pecas+2] == "0" + str(player)*num_pecas + str(oponente):
+                count -= 20
+            elif seq[i:i+num_pecas+2] == str(oponente) + str(player)*num_pecas + str(oponente):
+                count -= 40
+                
+    return count
 
 def heuristic(board, player):
     final_state = is_final_state(board)
@@ -183,30 +272,43 @@ def heuristic(board, player):
             return -1000, (-1, -1)
     
     score = 0
-    
     num_pecas = 3
+
     for col in range(0, len(board)):
-        #if board[col].count(0) != 0:
         if player == 1: #MAX
             if is_possible_vertical(board[col], 2): 
                 score -= 25
+                score -= total_seq_vertical(board[col], 2, num_pecas)
             if not is_possible_vertical(board[col], player): #FUGIR DESSE ESTADO
                 score -= 20
             if is_possible_vertical(board[col], player): 
                 score += 30
+
+
         if player == 2: #MIN
             if is_possible_vertical(board[col], 1):
                 score += 25
+                score += total_seq_vertical(board[col], 1, num_pecas)
             if not is_possible_vertical(board[col], player): #FUGIR DESSE ESTADO
                 score += 20
+                
             if is_possible_vertical(board[col], player): 
                 score -= 30
 
     if player == 1: 
         if is_possible_downward_diagonal(board, player):
             score += 20
+
         if is_possible_upward_diagonal(board, player): 
             score += 20
+
+        if is_possible_upward_diagonal(board, 2):
+            score -= total_seq_upward(board, 2, num_pecas)
+
+        if is_possible_downward_diagonal(board, 2):
+            score -= total_seq_downward(board, 2, num_pecas)
+
+
         if not is_possible_downward_diagonal(board, player): #FUGIR DESSE ESTADO
             score -= 20
         if not is_possible_upward_diagonal(board, player): #FUGIR DESSE ESTADO
@@ -215,8 +317,16 @@ def heuristic(board, player):
     if player == 2:
         if is_possible_downward_diagonal(board, player): 
             score -= 20
+
         if is_possible_upward_diagonal(board, player): 
             score -= 20
+
+        if is_possible_upward_diagonal(board, 1):
+            score += total_seq_upward(board, 1, num_pecas)
+            
+        if is_possible_downward_diagonal(board, 1):
+            score += total_seq_downward(board, 1, num_pecas)
+            
         if not is_possible_downward_diagonal(board, player): #FUGIR DESSE ESTADO
             score += 20
         if not is_possible_upward_diagonal(board, player): #FUGIR DESSE ESTADO
