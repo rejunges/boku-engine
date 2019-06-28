@@ -366,34 +366,41 @@ while not done:
                     #movimento = minimax(board, len(movimentos), player, len(movimentos))
                     movimento = alphabeta(board, len(movimentos), player, len(movimentos))
                     resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
+                    msg = eval(resp.read())
                 else: #sanduiche
                     number_sand += 1
                     inv_move = invalid_move(board, ant_board, player) #por causa do sanduiche
                     movimento = alphabeta(board, len(movimentos), player, len(movimentos), -inf, inf, inv_move)
                     resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
-            
+                    #print("SANDUICHE (INV)", inv_move)
+                    msg = eval(resp.read())
             if player == 1: #Mesmo número de peças
-                
-                if player_1 - player_2 == 0 + number_sand: 
+                if player_2 - player_1 == 0 + number_sand: 
                     #movimento = minimax(board, len(movimentos), player, len(movimentos))
                     movimento = alphabeta(board, len(movimentos), player, len(movimentos))
                     resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
+                    msg = eval(resp.read())
                 else: #sanduiche
                     number_sand += 1
                     inv_move = invalid_move(board, ant_board, player) #por causa do sanduiche
                     movimento = alphabeta(board, len(movimentos), player, len(movimentos), -inf, inf, inv_move)
                     resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[1][0],movimento[1][1]))
-
-
+                    #print("SANDUICHE (INV)", inv_move)
+                    msg = eval(resp.read())
+            
+            resp = urllib.request.urlopen("%s/tabuleiro" % host)
+            board = eval(resp.read()) #lista com 11 listas representando cada fileira na vertical (0 vazio, 1 player 1 e 2 player 2)
         else: #sanduiche
             number_sand -= 1
             movimento = random.choice(movimentos)
             resp = urllib.request.urlopen("%s/move?player=%d&coluna=%d&linha=%d" % (host,player,movimento[0],movimento[1]))
-        
+            #print("SANDUICHE (Remocao):", movimento)
+            msg = eval(resp.read())   
+    
+    
         print(movimento)
-        #Pega o tabuleiro completo
         
-        msg = eval(resp.read())
+        #msg = eval(resp.read())
         # Se com o movimento o jogo acabou, o cliente venceu
         if msg[0]==0:
             print("I win")
@@ -401,13 +408,10 @@ while not done:
         if msg[0]<0:
             raise Exception(msg[1])
         
-        resp = urllib.request.urlopen("%s/tabuleiro" % host)
-        board = eval(resp.read()) #lista com 11 listas representando cada fileira na vertical (0 vazio, 1 player 1 e 2 player 2)
+    
         ant_board = copy.deepcopy(board) #pega o board anterior para caso ocorra o sanduiche saber qual a posição inválida
         
     # Descansa um pouco para nao inundar o servidor com requisicoes
     time.sleep(1)
-
-
 
 
